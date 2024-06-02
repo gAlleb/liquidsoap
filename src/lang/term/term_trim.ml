@@ -20,6 +20,7 @@ and trim_ast = function
   | `Var _ -> ()
   | `Value _ -> ()
   | `Seq (t, t') ->
+      t.methods <- Methods.empty;
       trim_term t;
       trim_term t'
   | `Let { def; body } ->
@@ -28,9 +29,11 @@ and trim_ast = function
   | `List l -> List.iter trim_term l
   | `Cast (t, _) -> trim_term t
   | `App (t, l) ->
+      t.methods <- Methods.empty;
       trim_term t;
       List.iter (fun (_, t) -> trim_term t) l
-  | `Invoke { invoked; invoke_default } -> (
+  | `Invoke { invoked; invoke_default; meth } -> (
+      invoked.methods <- Methods.filter (fun n _ -> n = meth) invoked.methods;
       trim_term invoked;
       match invoke_default with None -> () | Some t -> trim_term t)
   | `Encoder enc -> trim_encoder enc
